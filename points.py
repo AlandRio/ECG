@@ -1,11 +1,12 @@
 import math as math
 import numpy as np
-
+import shared as shared
 
 class Points:  # class for storing points
-    def __init__(self, x_points=[], y_points=[]):
+    def __init__(self, x_points=[], y_points=[],label = "null"):
         self.x_points = x_points  # Original Points on the X-Axis in time domain 
         self.y_points = y_points  # Original Points on the Y-Axis in time domain
+        self.label = str(label)
 
 # ~ ~ ~ ~ Pre Processing ~ ~ ~ ~
 
@@ -19,7 +20,7 @@ def removeMean(old_points= Points()):
     return new_points
 
 # Convolves points
-def convolvePoints(first_points = Points(),second_points = Points()):
+def convolve(first_points = Points(),second_points = Points()):
     new_y = [] # Temporary list 
     min_point = int(first_points.x_points[0] + second_points.x_points[0]) # Calculates the minimum of the range for the indexes of convolved points
     max_point = int(first_points.x_points[-1] + second_points.x_points[-1] + 1) # Calcualtes the maximum of the range for the indexes of convolved points
@@ -37,7 +38,7 @@ def convolvePoints(first_points = Points(),second_points = Points()):
     return conv_points
 
 # Returns the Coeficents, Dont forget to convolve with original signal with convolvePoints()
-def bandPassFilter(samp_freq,trans_band,stop_atten,cut_off_1,cut_off_2): 
+def butterworth(samp_freq,trans_band,stop_atten,cut_off_1,cut_off_2): 
     # Checks if stop attentuation is outside of range
     if stop_atten < 0 or stop_atten > 74:
         print("Error Stop attentuation must be between 0-74")
@@ -134,7 +135,7 @@ def bandPassFilter(samp_freq,trans_band,stop_atten,cut_off_1,cut_off_2):
 
 
 # Normalizes wave between -1 and 1 for easier computation
-def normWave(old_points = Points()):
+def normalize(old_points = Points()):
     new_points = Points()
 
     max_point = max(old_points.y_points)
