@@ -62,8 +62,9 @@ def browseClick():
     shared.file_var.set(filedialog.askopenfilename(title="Select a txt File", filetypes=[("Text files", "*.txt")]))
 
 
-def preProcess(old_points = points()):
-    # Pre Processing
+def preProcess(old_points = None):
+    if old_points is None:
+        old_points = points()
     rmv_mean_points = points.remove_mean(old_points)
     butterworth_coef = points.bandPassFilter(samp_freq=1000,trans_band=100,stop_atten=100,cut_off_1=1,cut_off_2=40,)
     convolved_points = points.convolve(rmv_mean_points,butterworth_coef)
