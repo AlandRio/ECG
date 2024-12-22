@@ -10,23 +10,33 @@ class Points:  # class for storing points
 
 
 class Segment:
-    def __init__(self,points = Points()):
+    def __init__(self,points = Points(),label = 0):
         self.points = points
-        self.label = points.labels[0]
+        self.label = label
 
 
 
 # ~ ~ ~ ~ Pre Processing ~ ~ ~ ~
 
 # Removes DC Component
-def removeMean(old_points= Points()):
-    new_points = Points() # Makes a new object to store the new points
-    mean = sum(old_points.y_points)/len(old_points.y_points)  # Calculates the mean to remove it from each point
-    new_points.x_points = old_points.x_points # IDX is unchanged so we copy it into new points
-    for x in range(len(old_points.x_points)): # For loop goes over each point in Y and removes the mean from it
-        new_points.y_points.append(old_points.y_points[x] - mean)
-    new_points.labels = old_points.labels
-    return new_points
+def removeMean(old_points=None):
+    if old_points is None:
+        old_points = []  # Create a default Points object if none is provided
+
+    old_points_y_copy = np.copy(old_points)
+    
+    # Create a new Points object to store the transformed points
+    new_points = []
+    
+    # Calculate the mean of the old points
+    sum_points = sum(np.copy(old_points_y_copy)) 
+    len_points = len(np.copy(old_points_y_copy))
+    mean = sum_points/ len_points
+    for y in old_points_y_copy:
+        new_point = y - mean
+        new_points.append(new_point)  # Subtract the mean and append to new_points
+    return np.copy(new_points)
+
 
 # Convolves points
 def convolve(first_points = Points(),second_points = Points()):
@@ -154,31 +164,32 @@ def applybutterworthBandpassFilter(numerator_coeffs, denominator_coeffs,input_po
 
 
 # Normalizes wave between -1 and 1 for easier computation
-def normalize(old_points = Points()):
-    new_points = Points()
+def normalize(old_points = None):
+    if old_points is None:
+        old_points = []  # Create a default Points object if none is provided
+    new_points = []
 
-    max_point = max(old_points.y_points)
-    min_point = min(old_points.y_points)
+    max_point = max(old_points)
+    min_point = min(old_points)
 
-    for x in range(old_points.y_points):
-        fraction = (old_points.y_points[x] - min_point) / (max_point - min_point)
-        new_points.y_points.append(2 * fraction - 1)
-    new_points.x_points = list(range(new_points.y_points))
-    new_points.labels = new_points.labels
+    for y in old_points:
+        fraction = (y - min_point) / (max_point - min_point)
+        new_points.append(2 * fraction - 1)
+    
     return new_points
 
 
 # Resamples the points for easier computation
-def downSample(old_points = Points()):
-    small_n = 4
-    points_y = old_points.y_points
-    labels = old_points.labels
-    new_points = Points()
+def downSample(old_points = None, small_n = 4):
+    if old_points is None:
+        old_points = []  # Create a default Points object if none is provided
+    
+    points_y = np.copy(old_points)
+    new_points = []
+
     for y in points_y[::small_n]:
-        new_points.y_points.append(float(y))
-    for label in labels[::small_n]:
-        new_points.labels.append(int(label))
-    new_points.x_points = list(range(0, len(new_points.y_points)))
+        new_points.append(y)
+
     return new_points
 
 
@@ -190,6 +201,7 @@ def segment(old_points = Points()):
 
     segments = []
     y_length = len(old_points.y_points)
+    print(f"y:{y_length}/seg:{segment}")
     iterations = math.ceil(y_length / segment) 
 
     for n in range(0, iterations):
@@ -199,7 +211,7 @@ def segment(old_points = Points()):
         new_points.x_points = old_points.x_points[start:end:1]
         new_points.y_points = old_points.y_points[start:end:1]
         new_points.labels = old_points.labels[start:end:1]
-        segment_entry = Segment(new_points) 
+        segment_entry = Segment(new_points,new_points.labels[0]) 
         segments.append(segment_entry)
     
     return segments
@@ -240,7 +252,6 @@ def correlate(old_points = Points()):
         new_points.append(new_point)
     new_points.x_points = first.x_points
     new_points.y_points = fixPoints(new_points.y_points)
-    print(f"{new_points.y_points}")
     return new_points
 
 

@@ -53,13 +53,16 @@ def importFile(path = ""):
     # Opens file using the path user gave
     file = open(path)
     lines = file.readlines()
+    n = 0
     for line in lines:
         tempPoints.y_points.append(float(line))
         label = os.path.basename(path)
         name = label.split(".")
         number = name[0].split("s")
         tempPoints.labels.append(int(number[1]))
+        n += 1
     tempPoints.x_points = list(range(0,len(tempPoints.y_points)))
+
     return tempPoints
 
 def browseClick():
@@ -68,30 +71,52 @@ def browseClick():
 
 
 def getTestPoints():
-    imported_points_1 = importFile("train/s1.txt")
-    imported_points_2 = importFile("train/s2.txt")
-    imported_points_3 = importFile("train/s3.txt")
-
-    imported_points_1_2_y = np.concatenate((imported_points_1.y_points,imported_points_2.y_points),axis=0).tolist()
-    imported_points_y = np.concatenate((imported_points_1_2_y,imported_points_3.y_points),axis=0).tolist()
-
-    imported_points_1_2_L = np.concatenate((imported_points_1.labels,imported_points_2.labels),axis=0).tolist()
-    imported_points_L = np.concatenate((imported_points_1_2_L,imported_points_3.labels),axis=0).tolist()
-
-    imported_points_x = list(range(0,len(imported_points_y)))
-
-    return points.Points(imported_points_x,imported_points_y,imported_points_L)
+    imported_points = importFile("train/s1.txt")
+    importFile("train/s2.txt")
+    importFile("train/s3.txt")
+    return imported_points
 
 
 def preProcess(old_points = None):
     if old_points is None:
         old_points = points()
-    rmv_mean_points = points.removeMean(old_points)
+    # Remove Mean
+    print(f"Old: {len(old_points.y_points)}")
+    rmv_mean_points_y = points.removeMean(np.copy(old_points.y_points))
+    rmv_mean_points = points.Points()
+    rmv_mean_points.y_points = np.copy(rmv_mean_points_y)
+    rmv_mean_points.x_points = list(range(len(np.copy(rmv_mean_points_y))))
+    rmv_mean_points.labels = np.copy(old_points.labels)
+    print(f"Remove Mean: {len(rmv_mean_points.y_points)}")
+
+    # Apply Butterworth Filter
     b,a = points.butterworthBandpassFilter(samp_rate=1000,low_cut_off=1,high_cut_off=40)
     convolved_points = points.applybutterworthBandpassFilter(b,a,rmv_mean_points)
-    normalized_points = points.normalize(convolved_points)
-    resampled_points = points.downSample(normalized_points)
+    print(f"Butterworth: {len(convolved_points.y_points)}")
+
+    # Normalize
+    normalized_points_y = points.normalize(np.copy(convolved_points.y_points))
+    normalized_points = points.Points()
+    normalized_points.x_points = list(range(len(np.copy(normalized_points_y))))
+    normalized_points.y_points = np.copy(normalized_points_y)
+    normalized_points.labels = np.copy(convolved_points.labels)
+    print(f"Normalized: {len(normalized_points.y_points)}")
+
+    # Downsample
+    resampled_points_y = points.downSample(old_points=np.copy(normalized_points.y_points))
+    resampled_points_L = points.downSample(old_points=np.copy(normalized_points.labels))
+    resampled_points = points.Points()
+    resampled_points.y_points = np.copy(resampled_points_y)
+    normalized_points.x_points = list(range(len(np.copy(resampled_points_y))))
+    resampled_points.labels = np.copy(resampled_points_L)
+    print(f"Resampled: {len(resampled_points.y_points)}")
+
+    # Segment
     segmented_points = points.segment(resampled_points)
+    # L_1 = 0
+    # L_2 = 0
+    # L_3 = 0
+
     return segmented_points
 
 
@@ -99,11 +124,11 @@ def featureExtraction(segments_list = []):
     # Feature Extraction
     correlated_segments_list = []
     for segment in segments_list:
-        correlated_segments_list.append(points.correlate(segment))
+        correlated_segments_list.append(points.correlate(segment.points))
 
     final_segments_list = []
     for segment in correlated_segments_list:
-        final_segments_list.append(points.DCT(segment))
+        final_segments_list.append(points.DCT(segment.points))
     return final_segments_list
 
 
