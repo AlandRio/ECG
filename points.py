@@ -201,7 +201,7 @@ def segment(old_points = Points()):
 
     segments = []
     y_length = len(old_points.y_points)
-    iterations = math.ceil(y_length / segment) 
+    iterations = math.floor(y_length / segment) 
 
     for n in range(0, iterations):
         start = 0 + segment * n

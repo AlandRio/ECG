@@ -5,9 +5,11 @@ import numpy as np
 import menu as menu
 import shared as shared
 import points as points
+import tkinter as tk
 from sklearn.model_selection import train_test_split , cross_val_score
 from sklearn import metrics
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score , classification_report,confusion_matrix
 from sklearn import preprocessing
@@ -49,21 +51,19 @@ def dark_mode():
 
 
 def importFile(path = ""):
-    tempPoints = points.Points()
+    tempPoints = []
+    labels = []
     # Opens file using the path user gave
     file = open(path)
     lines = file.readlines()
-    n = 0
     for line in lines:
-        tempPoints.y_points.append(float(line))
-        label = os.path.basename(path)
-        name = label.split(".")
-        number = name[0].split("s")
-        tempPoints.labels.append(int(number[1]))
-        n += 1
-    tempPoints.x_points = list(range(0,len(tempPoints.y_points)))
-
-    return tempPoints
+        tempPoints.append(float(line))
+    
+    label = os.path.basename(path)
+    name = label.split(".")
+    number = name[0].split("s")
+    labels = [int(number[1])] * len(tempPoints)
+    return tempPoints, labels
 
 def browseClick():
     # Opens the browse menu and specifies that only text files can be taken
@@ -71,9 +71,15 @@ def browseClick():
 
 
 def getTestPoints():
-    imported_points = importFile("train/s1.txt")
-    importFile("train/s2.txt")
-    importFile("train/s3.txt")
+    imported_points_y_1,imported_points_L_1 = importFile("train/s1.txt")
+    imported_points_y_2,imported_points_L_2 = importFile("train/s2.txt")
+    imported_points_y_3,imported_points_L_3 = importFile("train/s3.txt")
+
+    imported_points = points.Points()
+
+    imported_points.y_points = imported_points_y_1 + imported_points_y_2 + imported_points_y_3
+    imported_points.labels = imported_points_L_1 + imported_points_L_2 + imported_points_L_3
+    imported_points.x_points = list(range(len(np.copy(imported_points.y_points))))
     return imported_points
 
 
@@ -177,30 +183,84 @@ def featureExtraction(segments_list = None):
     return final_segments_list
 
 
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+import numpy as np
+
 def train():
+    # Get the test points (this can be customized based on the actual file paths)
     imported_points = getTestPoints()
     processed_list = preProcess(imported_points)
     final_list = featureExtraction(processed_list)
 
-    # Classification
-    X = []
-    Y = []
+    # Prepare data for training
+    X = []  # Features
+    Y = []  # Labels
     for segment in final_list:
         label = segment.label
         points = segment.points.y_points
         X.append(points)
         Y.append(label)
-    X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.2,random_state=44)
-    knn_model = KNeighborsClassifier(n_neighbors=10)
-    knn_model.fit(X_train,Y_train)
-    # Evaluate model
-    accuracy = knn_model.score(X_test, Y_test)
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    return knn_model
 
+    # Ensure X is a 2D array (KNN requires this)
+    X = np.array(X)
+    Y = np.array(Y)
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    # Split data into training and testing sets (80% train, 20% test)
+    X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.2, random_state=44)
+
+    # Initialize the KNN model with k=3
+    knn_model = KNeighborsClassifier(n_neighbors=7)
+
+    # Train the model
+    knn_model.fit(X_train, Y_train)
+
+    # Evaluate model
+    Y_pred = knn_model.predict(X_test)
+    accuracy = accuracy_score(Y_test, Y_pred)
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+
+    # Return trained model for further use
+    return knn_model,scaler
+
+
+knn_model,scaler = train()  
 
 def test():
-    return
+    path = shared.file_var.get()
+    imported_points, labels = importFile(path=path)
+
+    # Preprocess the test data
+    old_points = points.Points()
+    old_points.y_points = imported_points
+    old_points.x_points = list(range(len(np.copy(imported_points))))
+    old_points.labels = [0] * len(np.copy(imported_points))
+
+    processed_list = preProcess(old_points)
+    final_list = featureExtraction(processed_list)
+
+    # Prepare the test data
+    X_test = []
+    for segment in final_list:
+        points_list = segment.points.y_points
+        X_test.append(points_list)
+
+    X_test = np.array(X_test)
+
+    X_scaled = scaler.transform(X_test)
+    # Predict using the trained KNN model
+    Y_pred = knn_model.predict(X_scaled)
+
+    # Display the prediction result
+    result = Y_pred[0]
+    print(f"Results: Student {result}")
+    shared.test_label.set(f"Results: Student {result}")
+    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.05, 0.6)
+
+  
 
 
 def main():
@@ -219,14 +279,15 @@ def main():
     # Changes the style of the graph to have a dark background
     plt.style.use("dark_background")
 
-    menu.createLabel("File:", main_canvas, 0, 0.2, 0.1, 0.05, 0.2)
-    menu.createEntry(shared.file_var, main_canvas, 0.6, 0.1, 0.25, 0.2)
+    menu.createLabel("File:", main_canvas, 0, 0.2, 0.1, 0.05, 0.4)
+    menu.createEntry(shared.file_var, main_canvas, 0.6, 0.1, 0.25, 0.4)
 
-    menu.createButton("Browse", browseClick, main_canvas, 0.1, 0.1, 0.8, 0.2)
-    
+    menu.createButton("Browse", browseClick, main_canvas, 0.1, 0.1, 0.8, 0.4)
+    shared.test_label.set("Results: ")
+    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.05, 0.6)
+
     menu.createButton("TEST", test, main_canvas, 0.2, 0.1, 0.4, 0.9)
 
     shared.root.mainloop()
 
-train()
 main()

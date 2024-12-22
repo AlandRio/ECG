@@ -13,3 +13,4 @@ dark_mode = 1
 file_var = tk.StringVar()
 count = 1
 all_points = points.Points()
+test_label = tk.StringVar()
