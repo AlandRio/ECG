@@ -113,22 +113,67 @@ def preProcess(old_points = None):
 
     # Segment
     segmented_points = points.segment(resampled_points)
-    # L_1 = 0
-    # L_2 = 0
-    # L_3 = 0
+    L_1 = 0
+    L_2 = 0
+    L_3 = 0
+    for segment in segmented_points:
+        if segment.label == 1:
+            L_1 += 1
+        elif segment.label == 2:
+            L_2 += 1
+        elif segment.label == 3:
+            L_3 += 1
+    print(f"Segments: {len(segmented_points)}, L_1,L_2,L_3: {L_1},{L_2},{L_3}")
 
     return segmented_points
 
 
-def featureExtraction(segments_list = []):
+def featureExtraction(segments_list = None):
+    if segments_list == None:
+        segments_list = []
+
     # Feature Extraction
+    print(f"old length = {len(segments_list)}")
     correlated_segments_list = []
     for segment in segments_list:
-        correlated_segments_list.append(points.correlate(segment.points))
+        segment_y = segment.points.y_points
+        correlated_segment_y = points.correlate(segment_y)
+        correlated_segment_x = list(range(len(np.copy(correlated_segment_y))))
+        correlated_segment_l = segment.label
 
+        correlated_segment_points = points.Points()
+        correlated_segment_points.x_points = np.copy(correlated_segment_x)
+        correlated_segment_points.y_points = np.copy(correlated_segment_y)
+        correlated_segment_points.labels = [correlated_segment_l] * len(np.copy(correlated_segment_y))
+
+
+        correlated_segment = points.Segment()
+        correlated_segment.points = correlated_segment_points
+        correlated_segment.label = correlated_segment_l
+
+        correlated_segments_list.append(correlated_segment)
+
+    print(f"Correlated length = {len(correlated_segments_list)}")
+    
     final_segments_list = []
     for segment in correlated_segments_list:
-        final_segments_list.append(points.DCT(segment.points))
+
+        final_segment_y = points.DCT(segment_y)
+        final_segment_x = list(range(len(np.copy(final_segment_y))))
+        final_segment_l = segment.label
+
+        final_segment_points = points.Points()
+        final_segment_points.x_points = np.copy(final_segment_x)
+        final_segment_points.y_points = np.copy(final_segment_y)
+        final_segment_points.labels = [final_segment_l] * len(np.copy(final_segment_y))
+
+
+        final_segment = points.Segment()
+        final_segment.points = final_segment_points
+        final_segment.label = final_segment_l
+
+        final_segments_list.append(final_segment)
+    print(f"Final length = {len(final_segments_list)}")
     return final_segments_list
 
 
@@ -142,11 +187,11 @@ def train():
     Y = []
     for segment in final_list:
         label = segment.label
-        points = segment.points_y
+        points = segment.points.y_points
         X.append(points)
         Y.append(label)
     X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.2,random_state=44)
-    knn_model = KNeighborsClassifier(n_neighbors=3)
+    knn_model = KNeighborsClassifier(n_neighbors=10)
     knn_model.fit(X_train,Y_train)
     # Evaluate model
     accuracy = knn_model.score(X_test, Y_test)

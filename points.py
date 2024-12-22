@@ -195,23 +195,39 @@ def downSample(old_points = None, small_n = 4):
 
 # Segments the data for easier computation
 def segment(old_points = Points()):
-    heart_beat = 200
+    heart_beat = 50
     number_segments = 4
     segment = number_segments * heart_beat
 
     segments = []
     y_length = len(old_points.y_points)
-    print(f"y:{y_length}/seg:{segment}")
     iterations = math.ceil(y_length / segment) 
 
     for n in range(0, iterations):
         start = 0 + segment * n
         end = segment + segment * n
         new_points = Points()
-        new_points.x_points = old_points.x_points[start:end:1]
-        new_points.y_points = old_points.y_points[start:end:1]
-        new_points.labels = old_points.labels[start:end:1]
-        segment_entry = Segment(new_points,new_points.labels[0]) 
+        new_points.x_points = np.copy(old_points.x_points[start:end:1])
+        new_points.y_points = np.copy(old_points.y_points[start:end:1])
+        new_points.labels = np.copy(old_points.labels[start:end:1])
+        L_1 = 0
+        L_2 = 0
+        L_3 = 0
+        for label in new_points.labels:
+            if label == 1:
+                L_1 += 1
+            elif label == 2:
+                L_2 += 1
+            elif label == 3:
+                L_3 += 1
+        label = 0
+        if L_1 == max(L_1,L_2,L_3):
+            label = 1
+        if L_2 == max(L_1,L_2,L_3):
+            label = 2
+        if L_3 == max(L_1,L_2,L_3):
+            label = 3
+        segment_entry = Segment(new_points,label=label) 
         segments.append(segment_entry)
     
     return segments
@@ -236,29 +252,35 @@ def fixPoints(arr = []):
     
 
 # Auto Correlation
-def correlate(old_points = Points()):
-    first = old_points
-    second = old_points
-    new_points = Points()
-    denominator = sum(np.pow(first.y_points,2)) * sum(np.pow(second.y_points,2))
-    denominator =  np.sqrt(denominator)/len(first.x_points)
-    for j in range(len(second.x_points)):
+def correlate(old_y_points = None):
+    if old_y_points is None:
+        old_y_points = []
+    
+    first = np.copy(old_y_points)
+    second = np.copy(old_y_points)
+
+    new_y = []
+    denominator = sum(np.pow(first,2)) * sum(np.pow(second,2))
+    denominator =  np.sqrt(denominator)/len(old_y_points)
+
+    for j in range(len(old_y_points)):
         num_sum = 0
-        for n in range(len(second.x_points)):
-            num_sum += first.y_points[n] * second.y_points[n]
-        second.y_points = shiftLeft(second.y_points)
-        numerator = num_sum/len(first.x_points)
+        for n in range(len(old_y_points)):
+            num_sum += first[n] * second[n]
+        second = shiftLeft(second)
+        numerator = num_sum/len(first)
         new_point = numerator/denominator
-        new_points.append(new_point)
-    new_points.x_points = first.x_points
-    new_points.y_points = fixPoints(new_points.y_points)
-    return new_points
+        new_y.append(new_point)
+    new_y = np.copy(fixPoints(new_y))
+    return new_y
 
 
 # Calculate DCT of points
-def DCT(old_points = Points()):
-    new_points = Points()
-    samples = len(old_points.x_points)
+def DCT(old_points = None):
+    if old_points is None:
+        old_points = []
+    new_points = []
+    samples = len(old_points)
     normalize = np.sqrt(2/samples)
     for k in range(samples):
         new_point = 0
@@ -266,10 +288,10 @@ def DCT(old_points = Points()):
         for n in range(samples):
             inside_cos = (np.pi/(4*samples)) * (2*n - 1) * (2*k-1)
             inside_cos = np.cos(inside_cos)
-            new_point += old_points.y_points[n] * inside_cos
+            new_point += old_points[n] * inside_cos
         new_point = round(new_point * normalize,9)
-        new_points.y_points.append(new_point)
-    new_points.x_points = old_points.x_points
+        new_points.append(new_point)
+    
     return new_points
 
 
