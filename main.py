@@ -187,6 +187,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
+from sklearn.model_selection import GridSearchCV
 
 def train():
     # Get the test points (this can be customized based on the actual file paths)
@@ -213,7 +214,7 @@ def train():
     X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.2, random_state=44)
 
     # Initialize the KNN model with k=3
-    knn_model = KNeighborsClassifier(n_neighbors=7)
+    knn_model = KNeighborsClassifier(n_neighbors=2)
 
     # Train the model
     knn_model.fit(X_train, Y_train)

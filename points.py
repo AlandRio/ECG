@@ -174,7 +174,7 @@ def normalize(old_points = None):
 
     for y in old_points:
         fraction = (y - min_point) / (max_point - min_point)
-        new_points.append(2 * fraction - 1)
+        new_points.append(fraction)
     
     return new_points
 
