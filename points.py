@@ -3,10 +3,18 @@ import numpy as np
 import shared as shared
 
 class Points:  # class for storing points
-    def __init__(self, x_points=[], y_points=[],label = "null"):
+    def __init__(self, x_points=[], y_points=[],labels = []):
         self.x_points = x_points  # Original Points on the X-Axis in time domain 
         self.y_points = y_points  # Original Points on the Y-Axis in time domain
-        self.label = str(label)
+        self.labels = labels # Label such as S1 S2 S3
+
+
+class Segment:
+    def __init__(self,points = Points()):
+        self.points = points
+        self.label = points.labels[0]
+
+
 
 # ~ ~ ~ ~ Pre Processing ~ ~ ~ ~
 
@@ -17,6 +25,7 @@ def removeMean(old_points= Points()):
     new_points.x_points = old_points.x_points # IDX is unchanged so we copy it into new points
     for x in range(len(old_points.x_points)): # For loop goes over each point in Y and removes the mean from it
         new_points.y_points.append(old_points.y_points[x] - mean)
+    new_points.labels = old_points.labels
     return new_points
 
 # Convolves points
@@ -37,101 +46,7 @@ def convolve(first_points = Points(),second_points = Points()):
     conv_points.y_points = new_y 
     return conv_points
 
-# Returns the Coeficents, Dont forget to convolve with original signal with convolvePoints()
-# def butterworth(samp_freq,trans_band,stop_atten,cut_off_1,cut_off_2):
-#     # Checks if stop attentuation is outside of range
-#     if stop_atten < 0 or stop_atten > 74:
-#         print("Error Stop attentuation must be between 0-74")
-#         return
-#
-#     # Calculates the normalized Trans Band
-#     normalized_trans = trans_band/samp_freq
-#     # Calculates the cut off frequencies for practical performance
-#     cut_off_1 = cut_off_1 - trans_band/2
-#     cut_off_2 = cut_off_2 + trans_band/2
-#     # Normalizes cut off frequencies
-#     cut_off_2 = cut_off_2/samp_freq
-#     cut_off_1 = cut_off_1/samp_freq
-#     # Calcualtes the omega frequencies
-#     omega_1 = cut_off_1*2*math.pi
-#     omega_2 = cut_off_2*2*math.pi
-#
-#     # Initialize variables used in filter
-#     window = 0
-#     w_n_0 = 0
-#     big_N = 0
-#
-#
-#
-#     # Chooses window based on stop attentuation
-#     if stop_atten <= 21: # Rectangular
-#         window = 0
-#         big_N = 0.9/normalized_trans
-#         w_n_0 = 1
-#     elif stop_atten <= 44: # Hanning
-#         window = 1
-#         big_N = 3.1/normalized_trans
-#         w_n_0 = 0.5 + 0.5*math.cos(0)
-#     elif stop_atten <= 53: # Hamming
-#         window = 2
-#         big_N = 3.3/normalized_trans
-#         w_n_0 = 0.54+ 0.46*math.cos(0)
-#     elif stop_atten <= 74: # Blackman
-#         window = 3
-#         big_N = 5.5/normalized_trans
-#         w_n_0 = 0.42 + 0.5*math.cos(0)+0.08*math.cos(0)
-#
-#     # Makes sure Big_N is an ODD number so we can use Type 1 Filter
-#     big_N = math.ceil(big_N)
-#     if big_N % 2 == 0:
-#         big_N = big_N + 1
-#
-#     # Initializes Coefficents list
-#     h_coef = []
-#     # Calculates the first element
-#     h_d_0 = 2*(cut_off_2-cut_off_1)
-#     # Appends the first element to the list of coefficents
-#     h_coef.append(h_d_0 * w_n_0)
-#
-#     # Loop to calculate half of the coefficents as it is symmetric and we can just copy it
-#     for n in range(1,math.ceil(big_N/2)):
-#         h_d = 0
-#         w_n = 0
-#         h_d = 2*cut_off_2*math.sin(n*omega_2)/(n*omega_2)-2*cut_off_1*math.sin(n*omega_1)/(n*omega_1)
-#         if window == 0:
-#             w_n = 1
-#         elif window == 1:
-#             w_n = 0.5 + 0.5*math.cos(2*math.pi*n/big_N)
-#         elif window == 2:
-#             w_n = 0.54 + 0.46*math.cos(2*math.pi*n/big_N)
-#         elif window == 3:
-#             w_inside_cos = math.pi*n/(big_N-1)
-#             w_n_param_number_1 = 0.5 * (math.cos(2*w_inside_cos))
-#             w_n_param_number_2 = 0.08 * (math.cos(4*w_inside_cos))
-#             w_n = 0.42 + w_n_param_number_1 + w_n_param_number_2
-#         h_n = h_d * w_n
-#         h_coef.append(h_n)
-#
-#     # Calculates the range from 0 to length of the coefficents (Which is half of the lenght + 1 since we havent copied the other side)
-#     h_coef_idx = np.arange(0,len(h_coef)).tolist()
-#     # Reverses the coefficents so we can copy them for symmetry
-#     h_coef.reverse()
-#     h_coef_idx.reverse()
-#     # Copies the reversed lists
-#     reverse_h_coef = np.copy(h_coef)
-#     reverse_h_coef_idx = np.multiply(np.copy(h_coef_idx), -1) # Multiplies by negative so that the indexes are -ve
-#     # Reverses the list again to undo the original reverse
-#     h_coef_idx.reverse()
-#     h_coef.reverse()
-#     # Pops the first elements which at index 0 because it is repeated twice as the end of the copied list and the original list
-#     h_coef.pop(0)
-#     h_coef_idx.pop(0)
-#
-#     # Concats the copied reversed list + the original list
-#     coef = Points()
-#     coef.x_points = np.concatenate((reverse_h_coef,h_coef),axis=0).tolist()
-#     coef.y_points = np.concatenate((reverse_h_coef_idx,h_coef_idx),axis=0).tolist()
-#     return coef
+
 def customButter(order , low_normal_cut_off , high_normal_cut_off):
     """
     Designs a Butterworth bandpass filter manually.
@@ -191,7 +106,9 @@ def butterworthBandpassFilter(samp_rate,low_cut_off,high_cut_off,order=1):
     high_normal_cut_off = high_cut_off / nyqs
     b , a = customButter(order , low_normal_cut_off, high_normal_cut_off,)
     return b,a
-def applybutterworthBandpassFilter(input_signal, numerator_coeffs, denominator_coeffs):
+
+
+def applybutterworthBandpassFilter(numerator_coeffs, denominator_coeffs,input_points = Points()):
     """
     Applies the Butterworth bandpass filter to a given signal.
 
@@ -203,6 +120,7 @@ def applybutterworthBandpassFilter(input_signal, numerator_coeffs, denominator_c
     Returns:
         output_signal (ndarray): Filtered signal.
     """
+    input_signal = np.array(input_points.y_points)
     # Initialize the output signal array
     output_signal = np.zeros_like(input_signal)
 
@@ -227,8 +145,14 @@ def applybutterworthBandpassFilter(input_signal, numerator_coeffs, denominator_c
 
         # Assign the calculated output to the output signal array
         output_signal[sample_index] = current_output
+    output_points = Points(
+        x_points= list(range(len(output_signal))),
+        y_points= output_signal.tolist(),
+        labels= input_points.labels
+    )
+    return output_points
 
-    return output_signal
+
 # Normalizes wave between -1 and 1 for easier computation
 def normalize(old_points = Points()):
     new_points = Points()
@@ -236,11 +160,11 @@ def normalize(old_points = Points()):
     max_point = max(old_points.y_points)
     min_point = min(old_points.y_points)
 
-    for x in range(new_points.samples):
-        new_points.x_points[x] = (old_points.x_points[x])
+    for x in range(old_points.y_points):
         fraction = (old_points.y_points[x] - min_point) / (max_point - min_point)
         new_points.y_points.append(2 * fraction - 1)
-    
+    new_points.x_points = list(range(new_points.y_points))
+    new_points.labels = new_points.labels
     return new_points
 
 
@@ -248,9 +172,12 @@ def normalize(old_points = Points()):
 def downSample(old_points = Points()):
     small_n = 4
     points_y = old_points.y_points
+    labels = old_points.labels
     new_points = Points()
     for y in points_y[::small_n]:
         new_points.y_points.append(float(y))
+    for label in labels[::small_n]:
+        new_points.labels.append(int(label))
     new_points.x_points = list(range(0, len(new_points.y_points)))
     return new_points
 
@@ -261,7 +188,7 @@ def segment(old_points = Points()):
     number_segments = 4
     segment = number_segments * heart_beat
 
-    new_points_list = []
+    segments = []
     y_length = len(old_points.y_points)
     iterations = math.ceil(y_length / segment) 
 
@@ -271,9 +198,11 @@ def segment(old_points = Points()):
         new_points = Points()
         new_points.x_points = old_points.x_points[start:end:1]
         new_points.y_points = old_points.y_points[start:end:1]
-        new_points_list.append(new_points)
+        new_points.labels = old_points.labels[start:end:1]
+        segment_entry = Segment(new_points) 
+        segments.append(segment_entry)
     
-    return new_points_list
+    return segments
 
 # ~ ~ ~ ~ Feature Extraction ~ ~ ~ ~ 
 

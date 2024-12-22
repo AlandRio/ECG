@@ -1,6 +1,7 @@
 
 from tkinter import filedialog
 from matplotlib import pyplot as plt
+import numpy as np
 import menu as menu
 import shared as shared
 import points as points
@@ -10,6 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score , classification_report,confusion_matrix
 from sklearn import preprocessing
+import os
 
 
 def dark_mode():
@@ -46,14 +48,17 @@ def dark_mode():
         border.config(highlightcolor=menu.fg.get(), highlightbackground=menu.fg.get())
 
 
-def importFile():
-    path = shared.file_var.get()
+def importFile(path = ""):
     tempPoints = points.Points()
     # Opens file using the path user gave
     file = open(path)
     lines = file.readlines()
     for line in lines:
         tempPoints.y_points.append(float(line))
+        label = os.path.basename(path)
+        name = label.split(".")
+        number = name[0].split("s")
+        tempPoints.labels.append(int(number[1]))
     tempPoints.x_points = list(range(0,len(tempPoints.y_points)))
     return tempPoints
 
@@ -62,50 +67,70 @@ def browseClick():
     shared.file_var.set(filedialog.askopenfilename(title="Select a txt File", filetypes=[("Text files", "*.txt")]))
 
 
+def getTestPoints():
+    imported_points_1 = importFile("train/s1.txt")
+    imported_points_2 = importFile("train/s2.txt")
+    imported_points_3 = importFile("train/s3.txt")
+
+    imported_points_1_2_y = np.concatenate((imported_points_1.y_points,imported_points_2.y_points),axis=0).tolist()
+    imported_points_y = np.concatenate((imported_points_1_2_y,imported_points_3.y_points),axis=0).tolist()
+
+    imported_points_1_2_L = np.concatenate((imported_points_1.labels,imported_points_2.labels),axis=0).tolist()
+    imported_points_L = np.concatenate((imported_points_1_2_L,imported_points_3.labels),axis=0).tolist()
+
+    imported_points_x = list(range(0,len(imported_points_y)))
+
+    return points.Points(imported_points_x,imported_points_y,imported_points_L)
+
+
 def preProcess(old_points = None):
     if old_points is None:
         old_points = points()
-    rmv_mean_points = points.remove_mean(old_points)
-    butterworth_coef = points.bandPassFilter(samp_freq=1000,trans_band=100,stop_atten=100,cut_off_1=1,cut_off_2=40,)
-    convolved_points = points.convolve(rmv_mean_points,butterworth_coef)
+    rmv_mean_points = points.removeMean(old_points)
+    b,a = points.butterworthBandpassFilter(samp_rate=1000,low_cut_off=1,high_cut_off=40)
+    convolved_points = points.applybutterworthBandpassFilter(b,a,rmv_mean_points)
     normalized_points = points.normalize(convolved_points)
     resampled_points = points.downSample(normalized_points)
     segmented_points = points.segment(resampled_points)
     return segmented_points
 
 
-def featureExtraction(points_list = []):
+def featureExtraction(segments_list = []):
     # Feature Extraction
-    correlated_points_list = []
-    for points in points_list:
-        correlated_points_list.append(points.correlate(points))
+    correlated_segments_list = []
+    for segment in segments_list:
+        correlated_segments_list.append(points.correlate(segment))
 
-    final_points_list = []
-    for points in correlated_points_list:
-        final_points_list.append(points.DCT(points))
-    return final_points_list
+    final_segments_list = []
+    for segment in correlated_segments_list:
+        final_segments_list.append(points.DCT(segment))
+    return final_segments_list
+
 
 def train():
-    imported_points = importFile()
+    imported_points = getTestPoints()
     processed_list = preProcess(imported_points)
     final_list = featureExtraction(processed_list)
 
     # Classification
     X = []
     Y = []
-    for points_list in final_list:
-        X.append(points_list.label)
-    
-    Y.append(points_list)
+    for segment in final_list:
+        label = segment.label
+        points = segment.points_y
+        X.append(points)
+        Y.append(label)
     X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.2,random_state=44)
     knn_model = KNeighborsClassifier(n_neighbors=3)
     knn_model.fit(X_train,Y_train)
     # Evaluate model
     accuracy = knn_model.score(X_test, Y_test)
     print(f"Accuracy: {accuracy * 100:.2f}%")
+    return knn_model
 
 
-
+def test():
+    return
 
 
 def main():
@@ -129,8 +154,9 @@ def main():
 
     menu.createButton("Browse", browseClick, main_canvas, 0.1, 0.1, 0.8, 0.2)
     
-    menu.createButton("Train", train, main_canvas, 0.2, 0.1, 0.4, 0.9)
+    menu.createButton("TEST", test, main_canvas, 0.2, 0.1, 0.4, 0.9)
 
     shared.root.mainloop()
 
+train()
 main()
