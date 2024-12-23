@@ -48,12 +48,7 @@ def createGraph(points_x, points_y, graph_label, x_label, canvas):
     shownPoints_X = []
     shownPoints_Y = []
     i = 0
-    if shared.startingPos_var.get() >= min(points_x) or shared.startingPos_var.get() < max(points_x):
-        try:
-            i = points_x.index(shared.startingPos_var.get())
-        except ValueError:
-            i = 0
-    for x in range(40):
+    for x in range(800):
         try:
             shownPoints_X.append(points_x[i + x])
             shownPoints_Y.append(points_y[i + x])
@@ -62,7 +57,7 @@ def createGraph(points_x, points_y, graph_label, x_label, canvas):
     
     fig, ax = plt.subplots()  # creates a figure in fig and sub-plots in ax
     # plots the graph using the original points object
-    ax.stem(shownPoints_X, shownPoints_Y,linefmt='g--',markerfmt="go",basefmt="none")
+    ax.plot(shownPoints_X, shownPoints_Y)
     ax.axhline(y=0, color='green', linewidth=0.8)
     # if shared.startingPos_var.get() < 40 or shared.startingPos_var.get() > 40:
     #     ax.axvline(x=0, color='white', linewidth=0.8)
@@ -73,7 +68,7 @@ def createGraph(points_x, points_y, graph_label, x_label, canvas):
     
     originalGraph = FigureCanvasTkAgg(fig, master=canvas)
     originalGraph.draw()
-    originalGraph.get_tk_widget().place(relwidth=1, relheight=0.9, relx=0, rely=0.1)
+    originalGraph.get_tk_widget().place(relwidth=0.9, relheight=0.4, relx=0.05, rely=0.4)
 
 
 def createCheck(var,onvalue,offvalue,canvas,relx,rely):

@@ -156,8 +156,8 @@ def applybutterworthBandpassFilter(numerator_coeffs, denominator_coeffs,input_po
         # Assign the calculated output to the output signal array
         output_signal[sample_index] = current_output
     output_points = Points(
-        x_points= list(range(len(output_signal))),
-        y_points= output_signal.tolist(),
+        x_points= np.array(list(range(len(output_signal)))),
+        y_points= np.array(output_signal),
         labels= input_points.labels
     )
     return output_points
@@ -174,10 +174,26 @@ def normalize(old_points = None):
 
     for y in old_points:
         fraction = (y - min_point) / (max_point - min_point)
-        new_points.append(fraction)
+        new_points.append(2*fraction - 1)
     
     return new_points
 
+
+def upsample(old_points = None,old_labels = None, small_n = 3):
+    if old_points is None:
+        old_points = []
+        old_labels = []
+    new_y = []
+    new_l = []
+    for x in range(len(old_points)):
+        new_y.append(old_points[x])
+        l = old_labels[x]
+        new_l.append(l)
+        if x != len(old_points) - 1:
+            for n in range(small_n):
+                new_y.append(0)
+                new_l.append(l)
+    return new_y,new_l
 
 # Resamples the points for easier computation
 def downSample(old_points = None, small_n = 4):
@@ -187,15 +203,16 @@ def downSample(old_points = None, small_n = 4):
     points_y = np.copy(old_points)
     new_points = []
 
-    for y in points_y[::small_n]:
-        new_points.append(y)
+    # for y in points_y[::small_n]:
+    #     new_points.append(y)
+    new_points = np.copy(points_y[::small_n])
 
     return new_points
 
 
 # Segments the data for easier computation
 def segment(old_points = Points()):
-    heart_beat = 50
+    heart_beat = 200
     number_segments = 4
     segment = number_segments * heart_beat
 
@@ -245,9 +262,9 @@ def shiftLeft(arr = []):
 # Fixes the points they're reversed beyond index 0 for some reason
 def fixPoints(arr = []):
     new_points = []
-    new_points.append(round(float(arr[0]),3))
+    new_points.append(float(arr[0]))
     for x in range (1, len(arr)):
-        new_points.append(round(float(arr[0-x]),3))
+        new_points.append(float(arr[0-x]))
     return new_points
     
 
@@ -256,18 +273,20 @@ def correlate(old_y_points = None):
     if old_y_points is None:
         old_y_points = []
     
-    first = np.copy(old_y_points)
-    second = np.copy(old_y_points)
+    first = np.array(np.copy(old_y_points))
+    second = np.array(np.copy(old_y_points))
 
     new_y = []
     denominator = sum(np.pow(first,2)) * sum(np.pow(second,2))
     denominator =  np.sqrt(denominator)/len(old_y_points)
 
     for j in range(len(old_y_points)):
-        num_sum = 0
-        for n in range(len(old_y_points)):
-            num_sum += first[n] * second[n]
-        second = shiftLeft(second)
+        # num_sum = 0
+        # for n in range(len(old_y_points)):
+        #     num_sum += first[n] * second[n]
+        # second = shiftLeft(second)
+        num_sum = np.dot(first,second)
+        second = np.roll(second,-1)
         numerator = num_sum/len(first)
         new_point = numerator/denominator
         new_y.append(new_point)
@@ -282,16 +301,26 @@ def DCT(old_points = None):
     new_points = []
     samples = len(old_points)
     normalize = np.sqrt(2/samples)
-    for k in range(samples):
-        new_point = 0
-        inside_cos = 0
-        for n in range(samples):
-            inside_cos = (np.pi/(4*samples)) * (2*n - 1) * (2*k-1)
-            inside_cos = np.cos(inside_cos)
-            new_point += old_points[n] * inside_cos
-        new_point = round(new_point * normalize,9)
-        new_points.append(new_point)
+
+    # for k in range(samples):
+    #     new_point = 0
+    #     inside_cos = 0
+    #     for n in range(samples):
+    #         inside_cos = (np.pi/(4*samples)) * (2*n - 1) * (2*k-1)
+    #         inside_cos = np.cos(inside_cos)
+    #         new_point += old_points[n] * inside_cos
+    #     new_point = new_point * normalize
+    #     new_points.append(new_point)
     
+    # Create a meshgrid of k and n values
+    k_vals = np.arange(samples).reshape((samples, 1))
+    n_vals = np.arange(samples)
+    
+    # Calculate the cosine term using broadcasting
+    cos_term = np.cos(np.pi / (4 * samples) * (2 * n_vals - 1) * (2 * k_vals - 1))
+    
+    # Compute the DCT as a dot product of the input points and the cosine term matrix
+    new_points = normalize * np.dot(cos_term.T, old_points)
     return new_points
 
 

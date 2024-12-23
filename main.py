@@ -2,18 +2,27 @@
 from tkinter import filedialog
 from matplotlib import pyplot as plt
 import numpy as np
+from scipy.fft import dct
+from scipy.signal import butter, filtfilt
 import menu as menu
 import shared as shared
 import points as points
-import tkinter as tk
-from sklearn.model_selection import train_test_split , cross_val_score
 from sklearn import metrics
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn import preprocessing
 from sklearn.metrics import accuracy_score , classification_report,confusion_matrix
 from sklearn import preprocessing
+from sklearn.model_selection import train_test_split , cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+
 import os
+from sklearn.model_selection import train_test_split
+import numpy as np
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
+from scipy.signal import resample
+
+import os
+
 
 
 def dark_mode():
@@ -22,14 +31,14 @@ def dark_mode():
         menu.bg.set("black")
         menu.fg.set("green")
         shared.dark_var.set("⋆⁺₊ 𖤓 ₊⋆")
-        plt.style.use("dark_background")
+        # plt.style.use("dark_background")
 
     elif shared.dark_mode == 1:
         shared.dark_mode = 0
         shared.dark_var.set("⋆⁺₊ ☾⋆⁺₊⋆")
         menu.bg.set("white")
         menu.fg.set("black")
-        plt.style.use('default')
+        # plt.style.use('default')
 
     for canvas in shared.canvases:
         canvas.config(bg = menu.bg.get())
@@ -78,8 +87,10 @@ def getTestPoints():
     imported_points = points.Points()
 
     imported_points.y_points = imported_points_y_1 + imported_points_y_2 + imported_points_y_3
+    imported_points.y_points  = np.array(imported_points.y_points)
     imported_points.labels = imported_points_L_1 + imported_points_L_2 + imported_points_L_3
-    imported_points.x_points = list(range(len(np.copy(imported_points.y_points))))
+    imported_points.labels = np.array(imported_points.labels)
+    imported_points.x_points = np.array(list(range(len(np.copy(imported_points.y_points)))))
     return imported_points
 
 
@@ -88,6 +99,8 @@ def preProcess(old_points = None):
         old_points = points()
     # Remove Mean
     print(f"Old: {len(old_points.y_points)}")
+
+
     rmv_mean_points_y = points.removeMean(np.copy(old_points.y_points))
     rmv_mean_points = points.Points()
     rmv_mean_points.y_points = np.copy(rmv_mean_points_y)
@@ -95,27 +108,43 @@ def preProcess(old_points = None):
     rmv_mean_points.labels = np.copy(old_points.labels)
     print(f"Remove Mean: {len(rmv_mean_points.y_points)}")
 
+
+    # Upsampling
+    upsample_points_y,upsample_points_l = points.upsample(old_points=np.copy(rmv_mean_points.y_points),old_labels=np.copy(rmv_mean_points.labels))
+    upsample_points = points.Points()
+    upsample_points.y_points = np.array(np.copy(upsample_points_y))
+    upsample_points.x_points = np.array(list(range(len(np.copy(upsample_points_y)))))
+    upsample_points.labels = np.array(np.copy(upsample_points_l))
+
+    print(f"Upsample: {len(upsample_points.y_points)},{len(upsample_points.labels)}")
+
+
     # Apply Butterworth Filter
     b,a = points.butterworthBandpassFilter(samp_rate=1000,low_cut_off=1,high_cut_off=40)
-    convolved_points = points.applybutterworthBandpassFilter(b,a,rmv_mean_points)
+    convolved_points = points.applybutterworthBandpassFilter(b,a,upsample_points)
     print(f"Butterworth: {len(convolved_points.y_points)}")
 
-    # Normalize
-    normalized_points_y = points.normalize(np.copy(convolved_points.y_points))
-    normalized_points = points.Points()
-    normalized_points.x_points = list(range(len(np.copy(normalized_points_y))))
-    normalized_points.y_points = np.copy(normalized_points_y)
-    normalized_points.labels = np.copy(convolved_points.labels)
-    print(f"Normalized: {len(normalized_points.y_points)}")
+
 
     # Downsample
-    resampled_points_y = points.downSample(old_points=np.copy(normalized_points.y_points))
-    resampled_points_L = points.downSample(old_points=np.copy(normalized_points.labels))
+    resampled_points_y = points.downSample(old_points=np.copy(convolved_points.y_points))
+    resampled_points_l = points.downSample(old_points=np.copy(convolved_points.labels))
     resampled_points = points.Points()
-    resampled_points.y_points = np.copy(resampled_points_y)
-    normalized_points.x_points = list(range(len(np.copy(resampled_points_y))))
-    resampled_points.labels = np.copy(resampled_points_L)
-    print(f"Resampled: {len(resampled_points.y_points)}")
+    resampled_points.y_points = np.array(np.copy(resampled_points_y))
+    resampled_points.x_points = np.array(list(range(len(np.copy(resampled_points_y)))))
+    resampled_points.labels = np.array(np.copy(resampled_points_l))
+    print(f"Downsample: {len(resampled_points.y_points)},{len(resampled_points.labels)}")
+
+
+    # Normalize
+    normalized_points_y = points.normalize(np.copy(resampled_points.y_points))
+    normalized_points = points.Points()
+    normalized_points.x_points = np.array(list(range(len(np.copy(normalized_points_y)))))
+    normalized_points.y_points = np.array(np.copy(normalized_points_y))
+    normalized_points.labels = np.array(np.copy(resampled_points.labels))
+    print(f"Normalized: {len(normalized_points.y_points)}")
+
+
 
     # Segment
     segmented_points = points.segment(resampled_points)
@@ -130,8 +159,11 @@ def preProcess(old_points = None):
         elif segment.label == 3:
             L_3 += 1
     print(f"Segments: {len(segmented_points)}, L_1,L_2,L_3: {L_1},{L_2},{L_3}")
-
-    return segmented_points
+    all_points = points.Points()
+    all_points.y_points = np.copy(normalized_points.y_points)
+    all_points.x_points = np.copy(normalized_points.x_points)
+    all_points.labels = np.copy(normalized_points.labels)
+    return segmented_points,all_points
 
 
 def featureExtraction(segments_list = None):
@@ -160,18 +192,24 @@ def featureExtraction(segments_list = None):
         correlated_segments_list.append(correlated_segment)
 
     print(f"Correlated length = {len(correlated_segments_list)}")
-    
     final_segments_list = []
     for segment in correlated_segments_list:
-
-        final_segment_y = points.DCT(segment_y)
-        final_segment_x = list(range(len(np.copy(final_segment_y))))
+        segment_y = segment.points.y_points
+        # final_segment_y = points.DCT(segment_y)
+        final_segment_y = dct(segment_y)
         final_segment_l = segment.label
-
+        
+        threshold = 1e-5
+        non_zero_y = []
+        for coef in final_segment_y:
+            if np.abs(coef) > threshold:
+                non_zero_y.append(coef)
+            else:
+                non_zero_y.append(0)
         final_segment_points = points.Points()
-        final_segment_points.x_points = np.copy(final_segment_x)
-        final_segment_points.y_points = np.copy(final_segment_y)
-        final_segment_points.labels = [final_segment_l] * len(np.copy(final_segment_y))
+        final_segment_points.y_points = np.array(np.copy(non_zero_y))
+        final_segment_points.x_points = np.array(list(range(len(np.copy(non_zero_y)))))
+        final_segment_points.labels = [final_segment_l] * len(np.copy(non_zero_y))
 
 
         final_segment = points.Segment()
@@ -179,20 +217,30 @@ def featureExtraction(segments_list = None):
         final_segment.label = final_segment_l
 
         final_segments_list.append(final_segment)
-    print(f"Final length = {len(final_segments_list)}")
+    
+    # Plot the results
+    # plt.figure(figsize=(10, 6))
+    # num1 = 20
+    # num2 = 40
+    # num3 = 80
+    # plt.plot(final_segments_list[num1].points.y_points[0:50], label=final_segments_list[num1].label, linestyle='--')
+    # plt.plot(final_segments_list[num2].points.y_points[0:50], label=final_segments_list[num2].label, linestyle='--')
+    # plt.plot(final_segments_list[num3].points.y_points[0:50], label=final_segments_list[num3].label, linestyle='--')
+    # plt.xlabel('Sample Index')
+    # plt.ylabel('Amplitude')
+    # plt.title('Butterworth Bandpass Filter (1-40 Hz)')
+    # plt.legend()
+    # plt.grid(True)
+    # plt.show()
     return final_segments_list
 
 
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
-import numpy as np
-from sklearn.model_selection import GridSearchCV
+
 
 def train():
     # Get the test points (this can be customized based on the actual file paths)
     imported_points = getTestPoints()
-    processed_list = preProcess(imported_points)
+    processed_list,all_points = preProcess(imported_points)
     final_list = featureExtraction(processed_list)
 
     # Prepare data for training
@@ -200,35 +248,44 @@ def train():
     Y = []  # Labels
     for segment in final_list:
         label = segment.label
-        points = segment.points.y_points
-        X.append(points)
+        points_list = np.array(segment.points.y_points)
+        X.append(points_list)
         Y.append(label)
 
     # Ensure X is a 2D array (KNN requires this)
     X = np.array(X)
     Y = np.array(Y)
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+
+    print(f"{X}")
+    print(f"{Y}")
     # Split data into training and testing sets (80% train, 20% test)
-    X_train, X_test, Y_train, Y_test = train_test_split(X_scaled, Y, test_size=0.2, random_state=44)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=102)
+
+    param_grid = {
+    'n_neighbors': range(1, 50),
+    'weights': ['uniform', 'distance'],
+    'metric': ['euclidean', 'manhattan', 'chebyshev', 'minkowski']
+    }
 
     # Initialize the KNN model with k=3
-    knn_model = KNeighborsClassifier(n_neighbors=2)
+    knn_model = KNeighborsClassifier(n_neighbors=3)
 
     # Train the model
     knn_model.fit(X_train, Y_train)
 
+    scores = cross_val_score(knn_model, X, Y, cv=5)
+    print(f"Cross-validation accuracy: {scores.mean()}")
     # Evaluate model
     Y_pred = knn_model.predict(X_test)
     accuracy = accuracy_score(Y_test, Y_pred)
     print(f"Accuracy: {accuracy * 100:.2f}%")
 
     # Return trained model for further use
-    return knn_model,scaler
+    return knn_model
 
 
-knn_model,scaler = train()  
+knn_model = train()  
 
 def test():
     path = shared.file_var.get()
@@ -238,9 +295,9 @@ def test():
     old_points = points.Points()
     old_points.y_points = imported_points
     old_points.x_points = list(range(len(np.copy(imported_points))))
-    old_points.labels = [0] * len(np.copy(imported_points))
+    old_points.labels = labels
 
-    processed_list = preProcess(old_points)
+    processed_list,all_points = preProcess(old_points)
     final_list = featureExtraction(processed_list)
 
     # Prepare the test data
@@ -251,15 +308,21 @@ def test():
 
     X_test = np.array(X_test)
 
-    X_scaled = scaler.transform(X_test)
     # Predict using the trained KNN model
-    Y_pred = knn_model.predict(X_scaled)
+    Y_pred = knn_model.predict(X_test)
 
     # Display the prediction result
-    result = Y_pred[0]
+    result = 0
+    if Y_pred[0] == 1:
+        result = 2
+    elif Y_pred[0] == 2:
+        result = 3
+    elif Y_pred[0] == 3:
+        result = 1
     print(f"Results: Student {result}")
     shared.test_label.set(f"Results: Student {result}")
-    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.05, 0.6)
+    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.4, 0.1)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],graph_label=f"Student {result}",x_label="Time",canvas=shared.root)
 
   
 
@@ -278,14 +341,14 @@ def main():
     shared.dark_var.set("⋆⁺₊ ☾⋆⁺₊⋆")
     menu.createButton(shared.dark_var.get(), dark_mode, main_canvas, 0.125, 0.05, 0, 0)
     # Changes the style of the graph to have a dark background
-    plt.style.use("dark_background")
+    # plt.style.use("dark_background")
 
-    menu.createLabel("File:", main_canvas, 0, 0.2, 0.1, 0.05, 0.4)
-    menu.createEntry(shared.file_var, main_canvas, 0.6, 0.1, 0.25, 0.4)
+    menu.createLabel("File:", main_canvas, 0, 0.2, 0.1, 0.05, 0.2)
+    menu.createEntry(shared.file_var, main_canvas, 0.6, 0.1, 0.25, 0.2)
 
-    menu.createButton("Browse", browseClick, main_canvas, 0.1, 0.1, 0.8, 0.4)
+    menu.createButton("Browse", browseClick, main_canvas, 0.1, 0.1, 0.8, 0.2)
     shared.test_label.set("Results: ")
-    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.05, 0.6)
+    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.4, 0.1)
 
     menu.createButton("TEST", test, main_canvas, 0.2, 0.1, 0.4, 0.9)
 
