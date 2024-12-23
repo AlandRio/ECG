@@ -260,7 +260,7 @@ def train():
     print(f"{X}")
     print(f"{Y}")
     # Split data into training and testing sets (80% train, 20% test)
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=102)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=300)
 
     param_grid = {
     'n_neighbors': range(1, 50),
@@ -322,7 +322,8 @@ def test():
     print(f"Results: Student {result}")
     shared.test_label.set(f"Results: Student {result}")
     menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
-    menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],graph_label=f"Student {result}",x_label="Time",canvas=shared.root)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],pos=0.05,graph_label=f"Student {result} Beat",x_label="Time",canvas=shared.root,count=800)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=X_test[0],pos=0.5,graph_label=f"Student {result} Coeff",x_label="Time",canvas=shared.root,count=50)
 
   
 

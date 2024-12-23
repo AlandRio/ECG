@@ -44,11 +44,11 @@ def createButton(label, func, canvas, relwidth, relheight, relx, rely):
     shared.buttons.append(Button)
 
 
-def createGraph(points_x, points_y, graph_label, x_label, canvas):
+def createGraph(points_x, points_y, graph_label, x_label, canvas,pos,count):
     shownPoints_X = []
     shownPoints_Y = []
     i = 0
-    for x in range(800):
+    for x in range(count):
         try:
             shownPoints_X.append(points_x[i + x])
             shownPoints_Y.append(points_y[i + x])
@@ -68,7 +68,7 @@ def createGraph(points_x, points_y, graph_label, x_label, canvas):
     
     originalGraph = FigureCanvasTkAgg(fig, master=canvas)
     originalGraph.draw()
-    originalGraph.get_tk_widget().place(relwidth=0.9, relheight=0.4, relx=0.05, rely=0.4)
+    originalGraph.get_tk_widget().place(relwidth=0.45, relheight=0.4, relx=pos, rely=0.4)
 
 
 def createCheck(var,onvalue,offvalue,canvas,relx,rely):
