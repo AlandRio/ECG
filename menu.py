@@ -20,8 +20,8 @@ def createCanvas(canvas, relwidth, relheight, relx, rely):
     return canvas
 
 
-def createLabel(label, canvas, highlight, relwidth, relheight, relx, rely):
-    label = tk.Label(canvas, text=label, fg=fg.get(), bg=bg.get())
+def createLabel(label, canvas, highlight, relwidth, relheight, relx, rely,font_size= 15):
+    label = tk.Label(canvas, text=label, fg=fg.get(), bg=bg.get(),font=("Arial",font_size))
     shared.labels.append(label)
     if highlight == 1:
         label.configure(highlightthickness=2, highlightbackground=fg.get())
@@ -36,7 +36,7 @@ def createEntry(var, canvas, relwidth, relheight, relx, rely):
 
 def createButton(label, func, canvas, relwidth, relheight, relx, rely):
     Border = tk.Frame(canvas, bd=0, highlightthickness=2, highlightcolor=fg.get(), highlightbackground=fg.get())
-    Button = tk.Button(Border, text=label, command=func, width='20')
+    Button = tk.Button(Border, text=label, command=func, width='20',font=("Arial",15))
     Button.configure(fg=fg.get(), bg=bg.get(), bd=0, borderwidth=0)
     Border.place(relwidth=relwidth, relheight=relheight, relx=relx, rely=rely)
     Button.place(relwidth=1, relheight=1, relx=0, rely=0)

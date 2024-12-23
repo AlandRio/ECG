@@ -321,7 +321,7 @@ def test():
         result = 1
     print(f"Results: Student {result}")
     shared.test_label.set(f"Results: Student {result}")
-    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.4, 0.1)
+    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
     menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],graph_label=f"Student {result}",x_label="Time",canvas=shared.root)
 
   
@@ -336,7 +336,7 @@ def main():
     
     main_canvas = menu.createCanvas(shared.root,1,1,0,0)
 
-    menu.createLabel("ECG BASED BIOMETRICS - TEAM SC_17",main_canvas,1,0.25,0.05,0.37,0)
+    menu.createLabel("ECG BASED BIOMETRICS - TEAM SC_17",main_canvas,1,0.5,0.05,0.25,0)
 
     shared.dark_var.set("⋆⁺₊ ☾⋆⁺₊⋆")
     menu.createButton(shared.dark_var.get(), dark_mode, main_canvas, 0.125, 0.05, 0, 0)
@@ -348,7 +348,7 @@ def main():
 
     menu.createButton("Browse", browseClick, main_canvas, 0.1, 0.1, 0.8, 0.2)
     shared.test_label.set("Results: ")
-    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.2, 0.1, 0.4, 0.1)
+    menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
 
     menu.createButton("TEST", test, main_canvas, 0.2, 0.1, 0.4, 0.9)
 
