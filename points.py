@@ -298,7 +298,6 @@ def correlate(old_y_points = None):
 def DCT(old_points = None):
     if old_points is None:
         old_points = []
-    new_points = []
     samples = len(old_points)
     normalize = np.sqrt(2/samples)
 
@@ -319,8 +318,9 @@ def DCT(old_points = None):
     # Calculate the cosine term using broadcasting
     cos_term = np.cos(np.pi / (4 * samples) * (2 * n_vals - 1) * (2 * k_vals - 1))
     
+    before_norm_points = np.dot(cos_term.T, old_points) 
     # Compute the DCT as a dot product of the input points and the cosine term matrix
-    new_points = normalize * np.dot(cos_term.T, old_points)
+    new_points = normalize * before_norm_points
     return new_points
 
 

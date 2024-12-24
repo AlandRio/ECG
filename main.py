@@ -195,8 +195,8 @@ def featureExtraction(segments_list = None):
     final_segments_list = []
     for segment in correlated_segments_list:
         segment_y = segment.points.y_points
-        # final_segment_y = points.DCT(segment_y)
-        final_segment_y = dct(segment_y)
+        final_segment_y = points.DCT(segment_y)
+        # final_segment_y = dct(segment_y)
         final_segment_l = segment.label
         
         threshold = 1e-5
