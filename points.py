@@ -277,7 +277,7 @@ def correlate(old_y_points = None):
     second = np.array(np.copy(old_y_points))
 
     new_y = []
-    denominator = sum(np.pow(first,2)) * sum(np.pow(second,2))
+    denominator = sum(np.power(first,2)) * sum(np.power(second,2))
     denominator =  np.sqrt(denominator)/len(old_y_points)
 
     for j in range(len(old_y_points)):
