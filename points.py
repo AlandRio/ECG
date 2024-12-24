@@ -75,8 +75,8 @@ def customButter(order , low_normal_cut_off , high_normal_cut_off):
         raise ValueError("Cutoff frequencies must satisfy 0 < low < high < 1.")
 
     # Pre-warp cutoff frequencies for bilinear transform
-    warped_low_cutoff = 2 * np.tan(np.pi * low_normal_cut_off)
-    warped_high_cutoff = 2 * np.tan(np.pi * high_normal_cut_off)
+    warped_low_cutoff = 1 * np.tan(np.pi * low_normal_cut_off)
+    warped_high_cutoff = 1 * np.tan(np.pi * high_normal_cut_off)
     warped_center = np.sqrt(warped_low_cutoff * warped_high_cutoff)  # Center frequency
     warped_bandwidth = warped_high_cutoff - warped_low_cutoff       # Bandwidth
 

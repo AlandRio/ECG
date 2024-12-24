@@ -125,7 +125,6 @@ def preProcess(old_points = None):
     print(f"Butterworth: {len(convolved_points.y_points)}")
 
 
-
     # Downsample
     resampled_points_y = points.downSample(old_points=np.copy(convolved_points.y_points))
     resampled_points_l = points.downSample(old_points=np.copy(convolved_points.labels))
@@ -263,11 +262,11 @@ def train():
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=300)
 
     param_grid = {
-    'n_neighbors': range(1, 50),
-    'weights': ['uniform', 'distance'],
-    'metric': ['euclidean', 'manhattan', 'chebyshev', 'minkowski']
+    'n_neighbors': range(1, 50)
     }
-
+    grid_search = GridSearchCV(KNeighborsClassifier(), param_grid, cv=5)
+    grid_search.fit(X_train, Y_train)
+    print(f"Best k: {grid_search.best_params_}")
     # Initialize the KNN model with k=3
     knn_model = KNeighborsClassifier(n_neighbors=3)
 
@@ -312,13 +311,14 @@ def test():
     Y_pred = knn_model.predict(X_test)
 
     # Display the prediction result
-    result = 0
-    if Y_pred[0] == 1:
-        result = 2
-    elif Y_pred[0] == 2:
-        result = 3
-    elif Y_pred[0] == 3:
-        result = 1
+    # result = 0
+    # if Y_pred[0] == 1:
+    #     result = 2
+    # elif Y_pred[0] == 2:
+    #     result = 3
+    # elif Y_pred[0] == 3:
+    #     result = 1
+    result = Y_pred[0]
     print(f"Results: Student {result}")
     shared.test_label.set(f"Results: Student {result}")
     menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
