@@ -162,6 +162,21 @@ def preProcess(old_points = None):
     all_points.y_points = np.copy(normalized_points.y_points)
     all_points.x_points = np.copy(normalized_points.x_points)
     all_points.labels = np.copy(normalized_points.labels)
+
+    # Plot the results
+    # plt.figure(figsize=(10, 6))
+    # num1 = 20
+    # num2 = 40
+    # num3 = 80
+    # plt.plot(segmented_points[num1].points.y_points[0:800], label=segmented_points[num1].label, linestyle='--')
+    # plt.plot(segmented_points[num2].points.y_points[0:800], label=segmented_points[num2].label, linestyle='--')
+    # plt.plot(segmented_points[num3].points.y_points[0:800], label=segmented_points[num3].label, linestyle='--')
+    # plt.xlabel('Sample Index')
+    # plt.ylabel('Amplitude')
+    # plt.title('Butterworth Bandpass Filter (1-40 Hz)')
+    # plt.legend()
+    # plt.grid(True)
+    # plt.show()
     return segmented_points,all_points
 
 
@@ -219,12 +234,9 @@ def featureExtraction(segments_list = None):
     
     # Plot the results
     # plt.figure(figsize=(10, 6))
-    # num1 = 20
-    # num2 = 40
-    # num3 = 80
-    # plt.plot(final_segments_list[num1].points.y_points[0:50], label=final_segments_list[num1].label, linestyle='--')
-    # plt.plot(final_segments_list[num2].points.y_points[0:50], label=final_segments_list[num2].label, linestyle='--')
-    # plt.plot(final_segments_list[num3].points.y_points[0:50], label=final_segments_list[num3].label, linestyle='--')
+    # for x in final_segments_list:
+    #     if x.label == 3:
+    #         plt.plot(x.points.y_points[0:20], label=x.label, linestyle='--')
     # plt.xlabel('Sample Index')
     # plt.ylabel('Amplitude')
     # plt.title('Butterworth Bandpass Filter (1-40 Hz)')
@@ -312,10 +324,21 @@ def test():
     result = Y_pred[0]
     # Display the prediction result
     print(f"Results: Student {result  + 1}")
-    shared.test_label.set(f"Results: Student {result  + 1}")
+    shared.test_label.set(f"Results: Student {result+1}")
+    # Plot the graph
+    # plt.figure(figsize=(10, 6))
+    # num1 = 0
+    # for x in X_test:
+    #     plt.plot(x[0:20], label="Label", linestyle='--')
+    # plt.xlabel('Sample Index')
+    # plt.ylabel('Amplitude')
+    # plt.title('Butterworth Bandpass Filter (1-40 Hz)')
+    # plt.legend()
+    # plt.grid(True)
+    # plt.show()
     menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
-    menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],pos=0.05,graph_label=f"Student {result + 1} Beat",x_label="Time",canvas=shared.root,count=800)
-    menu.createGraph(points_x=all_points.x_points[0:800],points_y=X_test[0],pos=0.5,graph_label=f"Student {result + 1} Coeff",x_label="Time",canvas=shared.root,count=50)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=imported_points[0:800],pos=0.05,graph_label=f"Student {result + 1} Beat",x_label="Time",canvas=shared.root,count=800)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=X_test,pos=0.5,graph_label=f"Student {result + 1} Coeff",x_label="Time",canvas=shared.root,count=20)
 
   
 

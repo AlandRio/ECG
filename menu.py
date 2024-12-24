@@ -48,16 +48,21 @@ def createGraph(points_x, points_y, graph_label, x_label, canvas,pos,count):
     shownPoints_X = []
     shownPoints_Y = []
     i = 0
-    for x in range(count):
-        try:
-            shownPoints_X.append(points_x[i + x])
-            shownPoints_Y.append(points_y[i + x])
-        except IndexError:
-            break
+    if count != 20:
+        for x in range(count):
+            try:
+                shownPoints_X.append(points_x[i + x])
+                shownPoints_Y.append(points_y[i + x])
+            except IndexError:
+                break
     
     fig, ax = plt.subplots()  # creates a figure in fig and sub-plots in ax
     # plots the graph using the original points object
-    ax.plot(shownPoints_X, shownPoints_Y)
+    if count != 20:
+        ax.plot(shownPoints_X, shownPoints_Y)
+    else:     
+        for x in points_y:
+            plt.plot(x[0:20], label="Label", linestyle='--')
     ax.axhline(y=0, color='green', linewidth=0.8)
     # if shared.startingPos_var.get() < 40 or shared.startingPos_var.get() > 40:
     #     ax.axvline(x=0, color='white', linewidth=0.8)
