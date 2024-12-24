@@ -308,19 +308,11 @@ def test():
     X_test = np.array(X_test)
 
     # Predict using the trained KNN model
-    Y_pred = knn_model.predict(X_test)
-
-    # Display the prediction result
-    # result = 0
-    # if Y_pred[0] == 1:
-    #     result = 2
-    # elif Y_pred[0] == 2:
-    #     result = 3
-    # elif Y_pred[0] == 3:
-    #     result = 1
+    Y_pred = knn_model.predict(X_test)%3
     result = Y_pred[0]
-    print(f"Results: Student {result}")
-    shared.test_label.set(f"Results: Student {result}")
+    # Display the prediction result
+    print(f"Results: Student {result  + 1}")
+    shared.test_label.set(f"Results: Student {result  + 1}")
     menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
     menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],pos=0.05,graph_label=f"Student {result} Beat",x_label="Time",canvas=shared.root,count=800)
     menu.createGraph(points_x=all_points.x_points[0:800],points_y=X_test[0],pos=0.5,graph_label=f"Student {result} Coeff",x_label="Time",canvas=shared.root,count=50)

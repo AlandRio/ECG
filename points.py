@@ -179,21 +179,21 @@ def normalize(old_points = None):
     return new_points
 
 
-def upsample(old_points = None,old_labels = None, small_n = 3):
+def upsample(old_points = None,old_labels = None, small_n = 4):
     if old_points is None:
         old_points = []
         old_labels = []
     new_y = []
-    new_l = []
+    new_label = []
     for x in range(len(old_points)):
         new_y.append(old_points[x])
-        l = old_labels[x]
-        new_l.append(l)
+        label = old_labels[x]
+        new_label.append(label)
         if x != len(old_points) - 1:
-            for n in range(small_n):
+            for n in range(small_n -1):
                 new_y.append(0)
-                new_l.append(l)
-    return new_y,new_l
+                new_label.append(label)
+    return new_y,new_label
 
 # Resamples the points for easier computation
 def downSample(old_points = None, small_n = 4):
