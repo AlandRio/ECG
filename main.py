@@ -314,8 +314,8 @@ def test():
     print(f"Results: Student {result  + 1}")
     shared.test_label.set(f"Results: Student {result  + 1}")
     menu.createLabel(shared.test_label.get(), shared.root, 0, 0.6, 0.1, 0.2, 0.1,font_size=60)
-    menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],pos=0.05,graph_label=f"Student {result} Beat",x_label="Time",canvas=shared.root,count=800)
-    menu.createGraph(points_x=all_points.x_points[0:800],points_y=X_test[0],pos=0.5,graph_label=f"Student {result} Coeff",x_label="Time",canvas=shared.root,count=50)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=all_points.y_points[0:800],pos=0.05,graph_label=f"Student {result + 1} Beat",x_label="Time",canvas=shared.root,count=800)
+    menu.createGraph(points_x=all_points.x_points[0:800],points_y=X_test[0],pos=0.5,graph_label=f"Student {result + 1} Coeff",x_label="Time",canvas=shared.root,count=50)
 
   
 
